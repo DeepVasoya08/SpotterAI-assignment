@@ -19,7 +19,8 @@ travel time.
 
 | Layer    | Choice                                              |
 | -------- | --------------------------------------------------- |
-| Frontend | React, TypeScript, Vite, Tailwind CSS               |
+| Frontend | React, TypeScript, Vite, Tailwind CSS, TanStack Query |
+| Map      | MapLibre GL via react-map-gl, OpenFreeMap basemap   |
 | Backend  | Django, Django REST Framework, httpx                |
 | Routing  | HERE Routing API (truck mode) and HERE Geocoding    |
 | Weather  | Open-Meteo forecast API                             |
@@ -169,6 +170,11 @@ Routes are ranked by, in order:
 Miles are compared at 0.1 mile precision and average risk at 0.01, so floating-point
 noise never decides a ranking. The API reports which of these criteria separated the
 recommended route from the runner-up.
+
+The order is applied strictly, as the brief lists it. One consequence: a route with a
+short Moderate stretch loses to a clear route even when the clear route is hours longer.
+The UI explains each recommendation in those terms ("Equal Severe and High exposure,
+with lower overall risk than Route B") so the driver can see the trade-off.
 
 ## Deployment
 
