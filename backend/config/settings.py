@@ -30,6 +30,9 @@ if not SECRET_KEY:
     SECRET_KEY = "insecure-local-development-key"
 
 ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
+# Render exposes the service's public hostname to the running process.
+if render_host := os.environ.get("RENDER_EXTERNAL_HOSTNAME"):
+    ALLOWED_HOSTS.append(render_host)
 
 INSTALLED_APPS = [
     "corsheaders",
@@ -43,6 +46,7 @@ MIDDLEWARE = [
     "django.middleware.gzip.GZipMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -84,6 +88,19 @@ USE_TZ = True
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_CONTENT_TYPE_NOSNIFF = True
+if IS_PRODUCTION:
+    SECURE_SSL_REDIRECT = True
+    # The platform health check calls the service over plain HTTP inside the network.
+    SECURE_REDIRECT_EXEMPT = [r"^api/health/$"]
+    SECURE_HSTS_SECONDS = 60 * 60 * 24 * 30
+
+SILENCED_SYSTEM_CHECKS = [
+    # Stateless JSON API: no cookies or sessions, so there is nothing for CSRF to forge.
+    "security.W003",
+    # Served from a platform subdomain we do not control, so HSTS must not cover siblings.
+    "security.W005",
+    "security.W021",
+]
 
 LOGGING = {
     "version": 1,

@@ -75,3 +75,11 @@ export function fetchCorridorForecast(
     signal: signal ?? null,
   })
 }
+
+/**
+ * Wakes the API early. The free hosting tier sleeps when idle, so pinging it while the
+ * driver fills in the form hides most of the cold start. Failures are ignored.
+ */
+export function warmUpApi(): void {
+  fetch(`${API_BASE_URL}/api/health/`).catch(() => undefined)
+}
