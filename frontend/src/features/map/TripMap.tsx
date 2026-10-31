@@ -13,7 +13,15 @@ import Map, {
 
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
 
-import type { PlannedRoute, TripPlan } from '@/api/types'
+import { Truck } from 'lucide-react'
+
+import type { CorridorForecast, LatLon, PlannedRoute, TripPlan } from '@/api/types'
+import {
+  cellColor,
+  cellOpacity,
+  corridorCollection,
+  type HeatmapMode,
+} from '@/features/heatmap/heatmapData'
 import { CheckpointDetails } from '@/features/map/CheckpointDetails'
 import { RiskLegend } from '@/features/map/RiskLegend'
 import {
@@ -35,14 +43,30 @@ const ROUTE_HIT_LAYER = 'route-hit'
 const CHECKPOINT_LAYER = 'checkpoints'
 const INTERACTIVE_LAYERS = [CHECKPOINT_LAYER, ROUTE_HIT_LAYER]
 
+export interface HeatmapSettings {
+  forecast: CorridorForecast | undefined
+  mode: HeatmapMode
+  hour: number
+  visible: boolean
+}
+
 interface TripMapProps {
   plan: TripPlan | null
   selectedRouteId: string | null
   labelOf: (routeId: string) => string
   onSelectRoute: (routeId: string) => void
+  heatmap: HeatmapSettings
+  truckPosition: LatLon | null
 }
 
-export function TripMap({ plan, selectedRouteId, labelOf, onSelectRoute }: TripMapProps) {
+export function TripMap({
+  plan,
+  selectedRouteId,
+  labelOf,
+  onSelectRoute,
+  heatmap,
+  truckPosition,
+}: TripMapProps) {
   const mapRef = useRef<MapRef>(null)
   const [cursor, setCursor] = useState('')
   // Tied to the route object, so a new plan or selection closes the popup.
@@ -65,6 +89,20 @@ export function TripMap({ plan, selectedRouteId, labelOf, onSelectRoute }: TripM
   const checkpoints = useMemo(
     () => (selectedRoute ? checkpointsCollection(selectedRoute) : null),
     [selectedRoute],
+  )
+
+  const corridor = useMemo(
+    () => (heatmap.forecast ? corridorCollection(heatmap.forecast) : null),
+    [heatmap.forecast],
+  )
+  const corridorPaint = useMemo(
+    () => ({
+      'fill-color': cellColor(heatmap.mode, heatmap.hour),
+      'fill-opacity': cellOpacity(heatmap.mode, heatmap.hour),
+      // Antialiasing draws faint seams between adjacent cells.
+      'fill-antialias': false,
+    }),
+    [heatmap.mode, heatmap.hour],
   )
 
   useEffect(() => {
@@ -106,6 +144,17 @@ export function TripMap({ plan, selectedRouteId, labelOf, onSelectRoute }: TripM
       style={{ width: '100%', height: '100%' }}
     >
       <NavigationControl position="top-right" showCompass={false} />
+
+      {corridor && (
+        <Source id="corridor" type="geojson" data={corridor}>
+          <Layer
+            id="corridor-heatmap"
+            type="fill"
+            layout={{ visibility: heatmap.visible ? 'visible' : 'none' }}
+            paint={corridorPaint}
+          />
+        </Source>
+      )}
 
       <Source id="routes" type="geojson" data={allRoutes}>
         <Layer
@@ -157,6 +206,19 @@ export function TripMap({ plan, selectedRouteId, labelOf, onSelectRoute }: TripM
       {origin && <EndpointMarker position={origin} label="A" title="Origin" />}
       {destination && <EndpointMarker position={destination} label="B" title="Destination" />}
 
+      <RiskLegend />
+
+      {truckPosition && (
+        <Marker longitude={truckPosition.lon} latitude={truckPosition.lat} anchor="center">
+          <span
+            title="Truck position at the selected forecast hour"
+            className="grid size-8 place-items-center rounded-full border-2 border-white bg-sky-600 text-white shadow-lg"
+          >
+            <Truck className="size-4" />
+          </span>
+        </Marker>
+      )}
+
       {popupCheckpoint && selectedRoute && (
         <Popup
           longitude={popupCheckpoint.lon}
@@ -168,8 +230,6 @@ export function TripMap({ plan, selectedRouteId, labelOf, onSelectRoute }: TripM
           <CheckpointDetails checkpoint={popupCheckpoint} routeLabel={labelOf(selectedRoute.id)} />
         </Popup>
       )}
-
-      <RiskLegend />
     </Map>
   )
 }

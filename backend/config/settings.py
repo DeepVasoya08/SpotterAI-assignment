@@ -39,6 +39,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # Hourly corridor forecasts are large, repetitive JSON; gzip shrinks them roughly 10x.
+    "django.middleware.gzip.GZipMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
 ]
@@ -64,7 +66,11 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.ScopedRateThrottle"],
     # Limits protect the third-party API quotas of the public demo.
-    "DEFAULT_THROTTLE_RATES": {"places": "120/min", "trip_plan": "20/min"},
+    "DEFAULT_THROTTLE_RATES": {
+        "places": "120/min",
+        "trip_plan": "20/min",
+        "corridor_forecast": "20/min",
+    },
     "EXCEPTION_HANDLER": "trips.exceptions.exception_handler",
     "UNAUTHENTICATED_USER": None,
 }

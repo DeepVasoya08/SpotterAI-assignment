@@ -94,6 +94,28 @@ domain has no framework or network code, so the rules are tested directly.
 4. Each checkpoint is classified at its arrival time, routes are summarised, and the
    recommendation is made.
 
+### Corridor heatmap
+
+Once routes are shown, the app requests a corridor forecast separately, so the routes
+appear without waiting for it.
+
+- The corridor is every point within 30 miles of any route. It is covered by a grid of
+  cells on a fixed global lattice. The lattice spacing (0.1° to 2°) is chosen per trip
+  so the corridor stays under 300 cells: short trips get a fine grid, cross-country
+  trips a coarse one.
+- Each cell gets wind, rain, snow and load-adjusted risk for departure + 0…48 hours,
+  using the same rules as the checkpoints.
+- The map draws every cell as a square coloured by its risk band. There is a layer
+  for overall risk and one each for wind, rain and snow, all coloured by the same
+  bands. I chose squares over a blurred density heatmap: each square shows exactly one
+  forecast and its band, and a blur would suggest detail that isn't in the data.
+- All 49 hours ship in one response (about 190 kB, 16 kB gzipped, for Chicago to Denver). The slider
+  and the play button only change the layer's paint expression, so moving through
+  hours never refetches or re-uploads data.
+- A truck marker shows where the selected route's truck will be at the chosen hour.
+- Cell forecasts are cached for 30 minutes, so reopening a plan does not use up the
+  weather API's daily quota again.
+
 ### API
 
 | Method | Path               | Purpose                                         |
@@ -101,6 +123,7 @@ domain has no framework or network code, so the rules are tested directly.
 | GET    | `/api/health/`     | Liveness check                                  |
 | GET    | `/api/places/?q=`  | US place suggestions (cached for a day)         |
 | POST   | `/api/trips/plan/` | Routes, checkpoints, risk and a recommendation  |
+| POST   | `/api/trips/corridor-forecast/` | Hourly risk grid around the routes |
 
 `POST /api/trips/plan/` takes:
 

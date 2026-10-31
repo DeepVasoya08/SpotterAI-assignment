@@ -89,3 +89,25 @@ export interface TripRequest {
   load_weight_lb: number
   sampling_interval_miles: SamplingInterval
 }
+
+export interface CorridorCell extends LatLon {
+  /** Risk level per hour as a number: 0 = Low … 4 = No Travel. */
+  risk: number[]
+  wind_gust_mph: number[]
+  rain_in_per_hr: number[]
+  snow_in_per_hr: number[]
+}
+
+export interface CorridorForecast {
+  start_time: string
+  step_degrees: number
+  /** Length of every hourly series; index 0 is the departure time. */
+  hours: number
+  cells: CorridorCell[]
+}
+
+export interface CorridorForecastRequest {
+  paths: LatLon[][]
+  departure_time: string
+  load_weight_lb: number
+}
