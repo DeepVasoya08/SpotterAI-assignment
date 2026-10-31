@@ -1,4 +1,5 @@
 import { AlertTriangle, ShieldCheck } from 'lucide-react'
+import { memo } from 'react'
 
 import type { TripPlan } from '@/api/types'
 import { cx } from '@/lib/cx'
@@ -12,7 +13,13 @@ interface RoutePanelProps {
   onSelectRoute: (routeId: string) => void
 }
 
-export function RoutePanel({ plan, labelOf, selectedRouteId, onSelectRoute }: RoutePanelProps) {
+// Memoised so dragging the forecast slider does not re-render the route list.
+export const RoutePanel = memo(function RoutePanel({
+  plan,
+  labelOf,
+  selectedRouteId,
+  onSelectRoute,
+}: RoutePanelProps) {
   const text = describeRecommendation(plan, labelOf)
   const Icon = text.warning ? AlertTriangle : ShieldCheck
 
@@ -49,4 +56,4 @@ export function RoutePanel({ plan, labelOf, selectedRouteId, onSelectRoute }: Ro
       </ul>
     </section>
   )
-}
+})

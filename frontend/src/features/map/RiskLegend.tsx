@@ -3,7 +3,7 @@ import { RISK_COLORS, RISK_LABELS } from '@/lib/risk'
 
 export function RiskLegend() {
   return (
-    <div className="absolute bottom-8 left-3 rounded-md bg-white/95 px-3 py-2 text-xs shadow-md">
+    <div className="absolute top-3 left-3 rounded-md bg-white/95 px-3 py-2 text-xs shadow-md">
       <p className="mb-1 font-medium text-slate-700">Weather risk</p>
       <ul className="space-y-0.5">
         {RISK_LEVELS.map((level) => (

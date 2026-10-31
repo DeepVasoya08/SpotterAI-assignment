@@ -1,4 +1,10 @@
-import type { Place, TripPlan, TripRequest } from '@/api/types'
+import type {
+  CorridorForecast,
+  CorridorForecastRequest,
+  Place,
+  TripPlan,
+  TripRequest,
+} from '@/api/types'
 
 const API_BASE_URL: string = import.meta.env.VITE_API_BASE_URL ?? ''
 
@@ -56,5 +62,16 @@ export function planTrip(trip: TripRequest): Promise<TripPlan> {
   return request<TripPlan>('/api/trips/plan/', {
     method: 'POST',
     body: JSON.stringify(trip),
+  })
+}
+
+export function fetchCorridorForecast(
+  corridor: CorridorForecastRequest,
+  signal?: AbortSignal,
+): Promise<CorridorForecast> {
+  return request<CorridorForecast>('/api/trips/corridor-forecast/', {
+    method: 'POST',
+    body: JSON.stringify(corridor),
+    signal: signal ?? null,
   })
 }
