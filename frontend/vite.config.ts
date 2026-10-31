@@ -9,6 +9,10 @@ export default defineConfig({
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
+  build: {
+    // MapLibre GL alone is about 1.1 MB minified (300 kB gzipped) and is loaded lazily.
+    chunkSizeWarningLimit: 1200,
+  },
   server: {
     proxy: { '/api': 'http://localhost:8000' },
   },
