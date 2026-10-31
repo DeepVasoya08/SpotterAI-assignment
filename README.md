@@ -71,7 +71,46 @@ _TBD_
 
 ## Risk rules and assumptions
 
-_TBD_
+The rules live in `backend/domain/` as plain Python with no framework dependencies.
+
+### Checkpoint risk
+
+Each checkpoint is classified per hazard, and its overall level is the worst of the three.
+
+| Condition | Low      | Moderate  | High      | Severe    | No Travel |
+| --------- | -------- | --------- | --------- | --------- | --------- |
+| Wind      | <25 mph  | 25–34     | 35–44     | 45–54     | ≥55 mph   |
+| Rain      | <0.10 in/hr | 0.10–0.25 | 0.25–0.50 | 0.50–1.00 | >1.00  |
+| Snow      | <0.5 in/hr  | 0.5–1.0   | 1.0–2.0   | 2.0–3.0   | >3.0   |
+
+Load rules escalate the wind level: 45–54 mph with more than 30,000 lb is No Travel, and
+35–44 mph with more than 40,000 lb is Severe.
+
+Interpretations where the brief leaves room:
+
+- **Wind uses gusts.** Classification uses the higher of sustained wind and gusts, since
+  gusts are what push a high-sided trailer. Both values are shown in the UI.
+- **Band edges.** Each band includes its lower bound (25 mph is Moderate, 0.25 in/hr is
+  High), so non-integer values like 34.6 mph fall in a well-defined band. No Travel for
+  rain and snow is strictly greater than the Severe ceiling, as written.
+- **Load rules escalate once.** A 40 mph gust with 50,000 lb becomes Severe, not No Travel.
+- **Load weight** is gross vehicle weight in pounds.
+
+### Route recommendation
+
+Routes are ranked by, in order:
+
+1. No Travel miles. Any route with a No Travel segment ranks behind every route without
+   one, so it is only recommended when all options are blocked, and the UI then warns
+   the driver not to depart.
+2. Severe miles
+3. High miles
+4. Distance-weighted average risk (Low = 0 … No Travel = 4)
+5. Travel time
+
+Miles are compared at 0.1 mile precision and average risk at 0.01, so floating-point
+noise never decides a ranking. The API reports which of these criteria separated the
+recommended route from the runner-up.
 
 ## Deployment
 
