@@ -7,7 +7,7 @@ import respx
 
 from domain.geo import GeoPoint
 from integrations.errors import ProviderError
-from integrations.open_meteo import BASE_URL, OpenMeteoClient
+from integrations.open_meteo import BASE_URL, LOCATIONS_PER_REQUEST, OpenMeteoClient
 
 START = datetime(2026, 11, 1, 12, 40, tzinfo=UTC)
 END = datetime(2026, 11, 1, 13, 10, tzinfo=UTC)
@@ -79,11 +79,11 @@ def test_splits_many_locations_into_chunks(client: OpenMeteoClient) -> None:
         return httpx.Response(200, json=[location([5], [0], [0]) for _ in range(count)])
 
     route = respx.get(BASE_URL).mock(side_effect=respond)
-    points = [GeoPoint(30 + i / 100, -100) for i in range(150)]
+    points = [GeoPoint(30 + i / 100, -100) for i in range(LOCATIONS_PER_REQUEST * 2 + 1)]
 
     forecasts = client.hourly_forecasts(points, START, END)
 
-    assert route.call_count == 2
+    assert route.call_count == 3
     assert [f.point for f in forecasts] == points
 
 

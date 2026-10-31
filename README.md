@@ -67,7 +67,55 @@ The same checks run in GitHub Actions on every push and pull request.
 
 ## Architecture
 
-_TBD_
+```
+backend/
+  domain/        Pure logic: risk rules, checkpoint sampling, forecasts, ranking
+  integrations/  HERE (routing, place search) and Open-Meteo (weather) clients
+  services/      Trip planning: route options, weather lookup, recommendation
+  trips/         Django REST API: validation, views, JSON presentation
+  config/        Django settings and URLs
+frontend/        React single-page app
+```
+
+Dependencies point inwards: `trips` → `services` → `integrations` → `domain`. The
+domain has no framework or network code, so the rules are tested directly.
+
+### Planning a trip
+
+1. HERE returns truck routes for the gross weight, with two alternatives. If fewer than
+   three distinct routes come back, extra candidates are forced through via points to
+   either side of the direct line, and any that mostly share road with a chosen route
+   are dropped.
+2. Each route is sampled at the chosen interval, and every checkpoint gets an
+   arrival time from HERE's per-span driving times.
+3. Checkpoints within about a mile of each other share one forecast. All forecasts are
+   fetched from Open-Meteo in small concurrent batches, typically in well under a second.
+4. Each checkpoint is classified at its arrival time, routes are summarised, and the
+   recommendation is made.
+
+### API
+
+| Method | Path               | Purpose                                         |
+| ------ | ------------------ | ----------------------------------------------- |
+| GET    | `/api/health/`     | Liveness check                                  |
+| GET    | `/api/places/?q=`  | US place suggestions (cached for a day)         |
+| POST   | `/api/trips/plan/` | Routes, checkpoints, risk and a recommendation  |
+
+`POST /api/trips/plan/` takes:
+
+```json
+{
+  "origin": { "lat": 41.8781, "lon": -87.6298 },
+  "destination": { "lat": 39.7392, "lon": -104.9903 },
+  "departure_time": "2026-11-01T14:00:00Z",
+  "load_weight_lb": 42000,
+  "sampling_interval_miles": 25
+}
+```
+
+The departure must be within the next 7 days so the whole trip fits in the forecast.
+Upstream failures return `502`. A missing route or forecast returns `422`. Requests
+are rate-limited per client to protect the third-party API quotas.
 
 ## Risk rules and assumptions
 
