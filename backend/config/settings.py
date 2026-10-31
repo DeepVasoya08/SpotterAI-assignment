@@ -62,8 +62,14 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [],
     "DEFAULT_PERMISSION_CLASSES": [],
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
+    "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.ScopedRateThrottle"],
+    # Limits protect the third-party API quotas of the public demo.
+    "DEFAULT_THROTTLE_RATES": {"places": "120/min", "trip_plan": "20/min"},
+    "EXCEPTION_HANDLER": "trips.exceptions.exception_handler",
     "UNAUTHENTICATED_USER": None,
 }
+
+HERE_API_KEY = os.environ.get("HERE_API_KEY", "")
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
