@@ -7,6 +7,7 @@ dependencies = [
     "django>=5.2,<5.3",
     "django-cors-headers>=4.9.0",
     "djangorestframework>=3.18.3",
+    "flexpolyline>=0.1.0",
     "gunicorn>=26.2.0",
     "httpx>=0.28.1",
 ]
@@ -40,7 +41,7 @@ plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
 exclude = ["^\\.venv/"]
 
 [[tool.mypy.overrides]]
-module = ["corsheaders.*"]
+module = ["corsheaders.*", "flexpolyline"]
 ignore_missing_imports = true
 
 [tool.django-stubs]
