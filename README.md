@@ -4,7 +4,13 @@ A React + Django web app that helps a truck driver pick the safest route between
 places, based on the weather forecast along each route, the truck's load weight and the
 travel time.
 
-> Status: in development. Sections marked _TBD_ are filled in as features land.
+[![CI](https://github.com/DeepVasoya08/SpotterAI-assignment/actions/workflows/ci.yml/badge.svg)](https://github.com/DeepVasoya08/SpotterAI-assignment/actions/workflows/ci.yml)
+
+**Live demo:** https://spotter-ai-assignment.vercel.app
+(API: https://truck-routing-api-x7wd.onrender.com/api/health/; the free tier may take up
+to a minute to wake on the first request.)
+
+![Dallas to Atlanta: three routes, the recommended one coloured by checkpoint risk, and the corridor forecast at +12 hours](docs/screenshot.png)
 
 ## Features
 
@@ -22,7 +28,7 @@ travel time.
 | Frontend | React, TypeScript, Vite, Tailwind CSS, TanStack Query |
 | Map      | MapLibre GL via react-map-gl, OpenFreeMap basemap   |
 | Backend  | Django, Django REST Framework, httpx                |
-| Routing  | HERE Routing API (truck mode) and HERE Geocoding    |
+| Routing  | HERE Routing v8 (truck mode) and HERE Autosuggest   |
 | Weather  | Open-Meteo forecast API                             |
 
 ## Getting started
@@ -198,6 +204,23 @@ The order is applied strictly, as the brief lists it. One consequence: a route w
 short Moderate stretch loses to a clear route even when the clear route is hours longer.
 The UI explains each recommendation in those terms ("Equal Severe and High exposure,
 with lower overall risk than Route B") so the driver can see the trade-off.
+
+## Known limitations
+
+- **Arrival times have no rest breaks.** Arrival times use HERE's traffic-aware driving
+  time. They do not add the breaks required by federal hours-of-service rules, so a
+  trip of more than 11 hours of driving arrives later in reality.
+- **The ranking is strict.** It follows the brief's order exactly, so a little
+  extra risk always outweighs any amount of travel time (see *Route recommendation*).
+- **Weather resolution.** Forecasts are hourly, from Open-Meteo's best-matching model
+  for each location. Long trips use a coarser corridor grid, up to 2° per cell, to stay
+  within 300 cells.
+- **Detour routes are a heuristic.** When HERE returns fewer than three distinct
+  routes, the extra options come from via points to either side of the direct line.
+  They are real truck routes, but not necessarily the next-best ones.
+- **Demo-scale infrastructure.** The cache and rate limits live in process memory, and
+  Open-Meteo's free tier allows about 10,000 location-forecasts a day for
+  non-commercial use. Production would use Redis and a paid weather plan.
 
 ## Deployment
 
