@@ -4,10 +4,13 @@ from functools import cache
 
 import httpx
 from django.conf import settings
+from django.core.cache import cache as django_cache
 from django.core.exceptions import ImproperlyConfigured
 
+from integrations.cached_weather import CachedWeatherProvider
 from integrations.here import HereClient
 from integrations.open_meteo import OpenMeteoClient
+from services.corridor_forecast import CorridorForecaster
 from services.trip_planner import TripPlanner
 
 REQUEST_TIMEOUT = httpx.Timeout(20.0, connect=5.0)
@@ -30,3 +33,7 @@ def here_client() -> HereClient:
 
 def trip_planner() -> TripPlanner:
     return TripPlanner(routing=here_client(), weather=OpenMeteoClient(http_client()))
+
+
+def corridor_forecaster() -> CorridorForecaster:
+    return CorridorForecaster(CachedWeatherProvider(OpenMeteoClient(http_client()), django_cache))

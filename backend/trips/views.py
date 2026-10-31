@@ -5,8 +5,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from trips import providers
-from trips.presenters import place_to_dict, trip_plan_to_dict
-from trips.serializers import PlaceSearchSerializer, TripRequestSerializer
+from trips.presenters import corridor_forecast_to_dict, place_to_dict, trip_plan_to_dict
+from trips.serializers import (
+    CorridorForecastRequestSerializer,
+    PlaceSearchSerializer,
+    TripRequestSerializer,
+)
 
 PLACE_SUGGESTION_LIMIT = 5
 PLACE_CACHE_SECONDS = 24 * 60 * 60
@@ -42,3 +46,17 @@ class TripPlanView(APIView):
         serializer.is_valid(raise_exception=True)
         plan = providers.trip_planner().plan(serializer.to_trip_request())
         return Response(trip_plan_to_dict(plan))
+
+
+class CorridorForecastView(APIView):
+    throttle_scope = "corridor_forecast"
+
+    def post(self, request: Request) -> Response:
+        serializer = CorridorForecastRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        forecast = providers.corridor_forecaster().forecast(
+            paths=serializer.paths_as_points(),
+            departure=serializer.validated_data["departure_time"],
+            load_weight_lb=serializer.validated_data["load_weight_lb"],
+        )
+        return Response(corridor_forecast_to_dict(forecast))

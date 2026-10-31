@@ -11,6 +11,7 @@ from typing import Any
 from domain.geo import GeoPoint, haversine_miles
 from domain.risk import RiskLevel
 from integrations.routing import Place
+from services.corridor_forecast import CorridorForecast
 from services.trip_planner import CheckpointWeather, PlannedRoute, TripPlan
 
 GEOMETRY_SPACING_MILES = 0.1
@@ -103,3 +104,26 @@ def _thin_geometry(points: Sequence[GeoPoint]) -> list[list[float]]:
         [round(point.lon, COORDINATE_DECIMALS), round(point.lat, COORDINATE_DECIMALS)]
         for point in kept
     ]
+
+
+def corridor_forecast_to_dict(forecast: CorridorForecast) -> dict[str, Any]:
+    """Hourly series per cell, index 0 being departure time.
+
+    Risk is sent as level numbers (0 = Low ... 4 = No Travel) to keep the payload small.
+    """
+    return {
+        "start_time": forecast.start.isoformat(),
+        "step_degrees": forecast.step_degrees,
+        "hours": len(forecast.cells[0].levels) if forecast.cells else 0,
+        "cells": [
+            {
+                "lat": cell.point.lat,
+                "lon": cell.point.lon,
+                "risk": [int(level) for level in cell.levels],
+                "wind_gust_mph": [round(c.effective_wind_mph) for c in cell.conditions],
+                "rain_in_per_hr": [round(c.rain_in_per_hr, 2) for c in cell.conditions],
+                "snow_in_per_hr": [round(c.snow_in_per_hr, 2) for c in cell.conditions],
+            }
+            for cell in forecast.cells
+        ],
+    }
