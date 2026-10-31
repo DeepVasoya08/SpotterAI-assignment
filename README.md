@@ -96,6 +96,16 @@ Interpretations where the brief leaves room:
 - **Load rules escalate once.** A 40 mph gust with 50,000 lb becomes Severe, not No Travel.
 - **Load weight** is gross vehicle weight in pounds.
 
+### Checkpoints and arrival times
+
+- The driver picks a sampling interval of 10, 25 or 50 miles.
+- Checkpoints are placed at that interval from the origin, plus one at the destination.
+- Each checkpoint's arrival time is departure time plus the routing provider's driving
+  time to that point, interpolated between route vertices. It includes traffic but not
+  rest breaks.
+- Each checkpoint stands for the road halfway to its neighbours. Those stretches add up
+  to the route length, and they are the miles counted per risk level.
+
 ### Route recommendation
 
 Routes are ranked by, in order:
