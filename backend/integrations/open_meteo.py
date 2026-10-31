@@ -1,7 +1,9 @@
 """Open-Meteo hourly forecast client.
 
-One request carries many locations, so checkpoints are fetched in chunks rather than
-one call each. Responses are requested in mph and inches, matching the risk rules.
+One request carries many locations, so checkpoints are fetched in small chunks sent
+concurrently: requests with a few dozen locations return in a fraction of a second,
+while a single request with a hundred can take over ten. Responses are requested in
+mph and inches, matching the risk rules.
 """
 
 from collections.abc import Sequence
@@ -19,8 +21,8 @@ from integrations.errors import ProviderError
 PROVIDER = "Open-Meteo"
 BASE_URL = "https://api.open-meteo.com/v1/forecast"
 HOURLY_VARIABLES = ("wind_speed_10m", "wind_gusts_10m", "rain", "showers", "snowfall")
-LOCATIONS_PER_REQUEST = 100
-MAX_CONCURRENT_REQUESTS = 4
+LOCATIONS_PER_REQUEST = 25
+MAX_CONCURRENT_REQUESTS = 8
 HOUR_FORMAT = "%Y-%m-%dT%H:%M"
 
 
