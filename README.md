@@ -201,4 +201,34 @@ with lower overall risk than Route B") so the driver can see the trade-off.
 
 ## Deployment
 
-_TBD_
+The API runs on [Render](https://render.com) and the React app on
+[Vercel](https://vercel.com). The page is served from Vercel's CDN, so it loads
+instantly even while the API wakes up.
+
+### API on Render
+
+`render.yaml` defines the service.
+
+1. In Render, choose **New → Blueprint** and select this repository.
+2. When prompted, set:
+   - `HERE_API_KEY`: the HERE REST API key.
+   - `CORS_ALLOWED_ORIGINS`: the Vercel URL, for example `https://truck-routing.vercel.app`.
+3. Render installs dependencies with `uv`, generates `DJANGO_SECRET_KEY`, and runs
+   gunicorn. It checks `/api/health/` before switching traffic.
+
+In production the API redirects HTTP to HTTPS, sends HSTS, accepts only its Render
+hostname, and allows cross-origin requests only from `CORS_ALLOWED_ORIGINS`. It uses
+one gunicorn process with 8 threads, so the in-memory cache and rate limits are shared
+and the I/O-bound calls to HERE and Open-Meteo overlap.
+
+### Web app on Vercel
+
+1. Import the repository in Vercel and set **Root Directory** to `frontend`.
+   `frontend/vercel.json` provides the build settings.
+2. Add the environment variable `VITE_API_BASE_URL` with the Render URL, for example
+   `https://truck-routing-api.onrender.com`.
+3. Deploy, then put the Vercel URL into the API's `CORS_ALLOWED_ORIGINS`.
+
+Render's free tier sleeps after 15 idle minutes, and the first request then takes up to
+a minute. The page pings `/api/health/` as soon as it opens, so the API is usually
+awake by the time a trip is submitted.
